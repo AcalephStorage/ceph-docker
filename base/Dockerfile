@@ -6,8 +6,7 @@ FROM ubuntu:14.04
 MAINTAINER Sébastien Han "seb@redhat.com"
 
 ENV CEPH_VERSION firefly
-ENV ETCDCTL_VERSION v2.0.4
-ENV ETCDCTL_ARCH linux-amd64
+ENV CONSULORETCD_VERSION v0.2
 
 ENV CONFD_VERSION 0.7.1
 ENV CONFD_ARCH linux-amd64
@@ -22,9 +21,11 @@ RUN echo deb http://ceph.com/debian-$CEPH_VERSION/ trusty main | tee /etc/apt/so
 RUN apt-get update
 RUN apt-get install -y --force-yes ceph
 
-# Install etcdctl
-RUN wget -q -O- "https://github.com/coreos/etcd/releases/download/${ETCDCTL_VERSION}/etcd-${ETCDCTL_VERSION}-${ETCDCTL_ARCH}.tar.gz" |tar xfz - -C/tmp/ etcd-${ETCDCTL_VERSION}-${ETCDCTL_ARCH}/etcdctl
-RUN mv /tmp/etcd-${ETCDCTL_VERSION}-${ETCDCTL_ARCH}/etcdctl /usr/local/bin/etcdctl
+
+#install consuloretcd-kv
+RUN wget -q -O- "https://github.com/TelanJ/consuloretcd-kv/releases/download/v0.2/consuloretcd-kv-${CONSULORETCD_VERSION}-05-14-2015.tar" |tar xfz - -C/tmp/consuloretcd-${CONSULORETCD_VERSION}/consuloretcd
+RUN mv /tmp/consuloretcd-${CONSULORETCD_VERSION}/consuloretcd /usr/local/bin/consuloretcd
+
 
 # Install confd
 ADD https://github.com/kelseyhightower/confd/releases/download/v${CONFD_VERSION}/confd-${CONFD_VERSION}-${CONFD_ARCH} /usr/local/bin/confd

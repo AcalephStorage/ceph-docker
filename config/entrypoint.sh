@@ -25,17 +25,17 @@ if [ -e /etc/ceph/ceph.conf ]; then
 fi
  
 # Acquire lock to not run into race conditions with parallel bootstraps
-until etcdctl mk ${CLUSTER_PATH}/lock $MON_NAME --ttl 60 > /dev/null 2>&1 ; do
+until consuloretcd CAS -${kv_type} ${CLUSTER_PATH}/lock $MON_NAME > /dev/null 2>&1 ; do
   echo "Configuration is locked by another host. Waiting."
   sleep 1
 done
 
-if etcdctl get --consistent ${CLUSTER_PATH}/done > /dev/null 2>%1 ; then
+if consuloretcd get -${kv_type} ${CLUSTER_PATH}/done > /dev/null 2>%1 ; then
   echo "Configuration found for cluster ${CLUSTER}. Writing to disk."
 
-  etcdctl get ${CLUSTER_PATH}/ceph.conf > /etc/ceph/ceph.conf
-  etcdctl get ${CLUSTER_PATH}/ceph.mon.keyring > /etc/ceph/ceph.mon.keyring
-  etcdctl get ${CLUSTER_PATH}/ceph.client.admin.keyring > /etc/ceph/ceph.client.admin.keyring
+  consuloretcd get -${kv_type} ${CLUSTER_PATH}/ceph.conf > /etc/ceph/ceph.conf
+  consuloretcd get -${kv_type} ${CLUSTER_PATH}/ceph.mon.keyring > /etc/ceph/ceph.mon.keyring
+  consuloretcd get -${kv_type} ${CLUSTER_PATH}/ceph.client.admin.keyring > /etc/ceph/ceph.client.admin.keyring
 
   ceph mon getmap -o /etc/ceph/monmap
 else 
@@ -55,13 +55,13 @@ ENDHERE
   ceph-authtool /etc/ceph/ceph.mon.keyring --create-keyring --gen-key -n mon. --cap mon 'allow *'
   monmaptool --create --add ${MON_NAME} ${MON_IP} --fsid ${fsid}  /etc/ceph/monmap
 
-  etcdctl set ${CLUSTER_PATH}/ceph.conf < /etc/ceph/ceph.conf > /dev/null
-  etcdctl set ${CLUSTER_PATH}/ceph.mon.keyring < /etc/ceph/ceph.mon.keyring > /dev/null
-  etcdctl set ${CLUSTER_PATH}/ceph.client.admin.keyring < /etc/ceph/ceph.client.admin.keyring > /dev/null
+  consuloretcd put -${kv_type} ${CLUSTER_PATH}/ceph.conf < /etc/ceph/ceph.conf > /dev/null
+  consuloretcd put -${kv_type} ${CLUSTER_PATH}/ceph.mon.keyring < /etc/ceph/ceph.mon.keyring > /dev/null
+  consuloretcd put -${kv_type} ${CLUSTER_PATH}/ceph.client.admin.keyring < /etc/ceph/ceph.client.admin.keyring > /dev/null
     
   echo "completed initialization for ${MON_NAME}"
-  etcdctl set ${CLUSTER_PATH}/done true > /dev/null 2>&1
+  consuloretcd put -${kv_type} ${CLUSTER_PATH}/done true > /dev/null 2>&1
 fi
 
-etcdctl rm ${CLUSTER_PATH}/lock > /dev/null 2>&1
+consuloretcd delete -${kv_type} ${CLUSTER_PATH}/lock > /dev/null 2>&1
 
