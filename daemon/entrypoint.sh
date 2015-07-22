@@ -402,6 +402,48 @@ ENDHERE
 
 }
 
+
+##############
+#  KV_CHECK  #
+##############
+
+#used to detect and remove inexistent mons
+function start_kvcheck {
+
+  $(ceph -s | grep "mons down" >> /tmp/tmp_mon)
+  if [[ -s /tmp/tmp_mon ]] ; then
+    kviator --kvstore=${KV_TYPE} --client=${KV_IP}:${KV_PORT} list ceph-config/ceph/mon_host | cut -d/ -f4 - >> /tmp/host
+
+   $(ceph -s | grep "mons down" >> /tmp/tmp_mon)
+
+    awk '{ print $6 }' /tmp/tmp_mon > /tmp/tmp_mon2
+
+    for x in $(cat /tmp/tmp_mon2 | sed -n 1'p' | tr ',' '\n')
+     do echo $x >> /tmp/act_mon
+    done
+
+    i=0
+
+    while read mon_id ; do
+        while read mon_act ; do
+          if [ $mon_id == $mon_act ]; then
+           i=1
+           break
+          fi
+        done < /tmp/act_mon
+        if [ $i ==  "0" ]; then
+          echo 'Removing mon ${mon_id}'
+          ceph mon remove $mon_id
+          kviator --kvstore=${KV_TYPE} --client=${KV_IP}:${KV_PORT} del ceph-config/ceph/${mon_id}
+          i=0
+        fi
+     done < /tmp/host
+
+    sleep 1800
+  fi
+}
+
+
 ###############
 # CEPH_DAEMON #
 ###############
@@ -439,12 +481,15 @@ case "$CEPH_DAEMON" in
    restapi)
       start_restapi
       ;;
+   kvcheck)
+      start_kvcheck
+      ;;  
    *)
       if [ ! -n "$CEPH_DAEMON" ]; then
           echo "ERROR- One of CEPH_DAEMON or a daemon parameter must be defined as the name "
           echo "of the daemon you want to deploy."
-          echo "Valid values for CEPH_DAEMON are MON, OSD, OSD_DIRECTORY, OSD_CEPH_DISK, OSD_CEPH_DISK_ACTIVATE, MDS, RGW, RESTAPI"
-          echo "Valid values for the daemon parameter are mon, osd, osd_directory, osd_ceph_disk, osd_ceph_disk_activate, mds, rgw, restapi"
+          echo "Valid values for CEPH_DAEMON are MON, OSD, OSD_DIRECTORY, OSD_CEPH_DISK, OSD_CEPH_DISK_ACTIVATE, MDS, RGW, RESTAPI, KVCHECK"
+          echo "Valid values for the daemon parameter are mon, osd, osd_directory, osd_ceph_disk, osd_ceph_disk_activate, mds, rgw, restapi, kvcheck"
           exit 1
       fi
       ;;
