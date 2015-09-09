@@ -142,22 +142,22 @@ function start_osd {
       directory)
          osd_directory
          ;;
-      disk)
-         osd_disk
+      prepare)
+         osd_prepare
          ;;
       activate)
          osd_activate
          ;;
       *)
          if [[ ! -d /var/lib/ceph/osd || -n "$(find /var/lib/ceph/osd -prune -empty)" ]]; then
-            echo "No bootstrapped OSDs found; trying ceph-disk"
-            osd_disk
+            echo "No bootstrapped OSDs found; run prepare first"
+            exit 1
          else
             if [ -z "${OSD_DEVICE}" ]; then
                 echo "Bootstrapped OSD(s) found; using OSD directory"
                 osd_directory
             else
-                echo "Bootstrapped OSD(s) found; using ${OSD_DEVICE}"
+                echo "Bootstrapped OSD(s) found; activating ${OSD_DEVICE}"
                 osd_activate
             fi
          fi
@@ -225,10 +225,10 @@ exec /sbin/my_init
 }
 
 #################
-# OSD_CEPH_DISK #
+# OSD_CEPH_PREPARE #
 #################
 
-function osd_disk {
+function osd_prepare {
   if [[ -z "${OSD_DEVICE}" ]];then
     echo "ERROR- You must provide a device to build your OSD ie: /dev/sdb"
     exit 1
@@ -264,7 +264,7 @@ function osd_disk {
   OSD_WEIGHT=$(df -P -k /var/lib/ceph/osd/${CLUSTER}-$OSD_ID/ | tail -1 | awk '{ d= $2/1073741824 ; r = sprintf("%.2f", d); print r }')
   ceph ${CEPH_OPTS} --name=osd.${OSD_ID} --keyring=/var/lib/ceph/osd/${CLUSTER}-${OSD_ID}/keyring osd crush create-or-move -- ${OSD_ID} ${OSD_WEIGHT} ${CRUSH_LOCATION}
 
-  exec /usr/bin/ceph-osd ${CEPH_OPTS} -f -d -i ${OSD_ID}
+  echo "OSD prepared; OSD may now used with osd directory"
 }
 
 
@@ -284,7 +284,7 @@ function osd_activate {
   OSD_WEIGHT=$(df -P -k /var/lib/ceph/osd/${CLUSTER}-$OSD_ID/ | tail -1 | awk '{ d= $2/1073741824 ; r = sprintf("%.2f", d); print r }')
   ceph ${CEPH_OPTS} --name=osd.${OSD_ID} --keyring=/var/lib/ceph/osd/${CLUSTER}-${OSD_ID}/keyring osd crush create-or-move -- ${OSD_ID} ${OSD_WEIGHT} ${CRUSH_LOCATION}
 
-  exec /usr/bin/ceph-osd ${CEPH_OPTS} -f -d -i ${OSD_ID}
+  echo "OSD activated; OSD may now used with osd directory"
 }
 
 #######
