@@ -258,13 +258,11 @@ function osd_prepare {
   else
     ceph-disk -v prepare ${OSD_DEVICE}
   fi
+  echo "OSD prepared."
 
-  ceph-disk -v activate ${OSD_DEVICE}1
-  OSD_ID=$(cat /var/lib/ceph/osd/$(ls -ltr /var/lib/ceph/osd/ | tail -n1 | awk -v pattern="$CLUSTER" '$0 ~ pattern {print $9}')/whoami)
-  OSD_WEIGHT=$(df -P -k /var/lib/ceph/osd/${CLUSTER}-$OSD_ID/ | tail -1 | awk '{ d= $2/1073741824 ; r = sprintf("%.2f", d); print r }')
-  ceph ${CEPH_OPTS} --name=osd.${OSD_ID} --keyring=/var/lib/ceph/osd/${CLUSTER}-${OSD_ID}/keyring osd crush create-or-move -- ${OSD_ID} ${OSD_WEIGHT} ${CRUSH_LOCATION}
+  osd_activate
 
-  echo "OSD prepared; OSD may now used with osd directory"
+  echo "OSD may now used with osd directory."
 }
 
 
@@ -284,7 +282,7 @@ function osd_activate {
   OSD_WEIGHT=$(df -P -k /var/lib/ceph/osd/${CLUSTER}-$OSD_ID/ | tail -1 | awk '{ d= $2/1073741824 ; r = sprintf("%.2f", d); print r }')
   ceph ${CEPH_OPTS} --name=osd.${OSD_ID} --keyring=/var/lib/ceph/osd/${CLUSTER}-${OSD_ID}/keyring osd crush create-or-move -- ${OSD_ID} ${OSD_WEIGHT} ${CRUSH_LOCATION}
 
-  echo "OSD activated; OSD may now used with osd directory"
+  echo "OSD activated."
 }
 
 #######
