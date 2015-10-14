@@ -147,6 +147,9 @@ function start_osd {
       activate)
          osd_activate
          ;;
+      devices)
+         osd_devices
+         ;;
       *)
          if [[ ! -d /var/lib/ceph/osd || -n "$(find /var/lib/ceph/osd -prune -empty)" ]]; then
             echo "No bootstrapped OSDs found; run prepare first"
@@ -162,6 +165,29 @@ function start_osd {
          fi
          ;;
    esac
+}
+
+#################
+# OSD_DEVICES   #
+#################
+
+function osd_devices {
+  if [[ -z "${OSD_DEVICES}" ]];then
+    echo "ERROR- You must provide a list of devices to build your OSDs ie: '/dev/sdb:/dev/sdc1 /dev/sdd:/dev/sdc2'"
+    # exit 1
+  fi
+
+  for d in ${OSD_DEVICES}
+  do
+    OSD_DEVICE=$(echo $d | cut -f1 -d:)
+    OSD_JOURNAL=$(echo $d | cut -f2 -d:)
+    if [[ "${OSD_DEVICE}" = "${OSD_JOURNAL}" ]]; then
+      unset OSD_JOURNAL
+    fi
+    osd_prepare
+
+  done
+  osd_directory
 }
 
 
@@ -245,28 +271,28 @@ function osd_prepare {
   # TODO:
   # -  add device format check (make sure only one device is passed
 
-  if [[ "$(parted --script ${OSD_DEVICE} print | egrep '^ 1.*ceph data')" && ${OSD_FORCE_ZAP} -ne "1" ]]; then
-    echo "ERROR- It looks like this device is an OSD, set OSD_FORCE_ZAP=1 to use this device anyway and zap its content"
-    exit 1
-  elif [[ "$(parted --script ${OSD_DEVICE} print | egrep '^ 1.*ceph data')" && ${OSD_FORCE_ZAP} -eq "1" ]]; then
-    ceph-disk -v zap ${OSD_DEVICE}
+  if [[ "$(parted --script ${OSD_DEVICE} print | egrep '^ 1.*ceph data')" ]]; then
+    echo "${OSD_DEVICE} is already an OSD"
+  else
+    if [[ ! -z "${OSD_JOURNAL}" ]]; then
+      echo "Preparing OSD: ${OSD_DEVICE}:${OSD_JOURNAL}"
+      ceph-disk -v prepare ${OSD_DEVICE} ${OSD_JOURNAL}
+    else
+      echo "Preparing OSD: ${OSD_DEVICE}"
+      ceph-disk -v prepare ${OSD_DEVICE}
+    fi
   fi
 
-  if [[ ! -z "${OSD_JOURNAL}" ]]; then
-    ceph-disk -v prepare ${OSD_DEVICE} ${OSD_JOURNAL}
-  else
-    ceph-disk -v prepare ${OSD_DEVICE}
-  fi
   echo "OSD prepared."
 
   osd_activate
 
-  echo "OSD may now used with osd directory."
+  echo "OSD may now be used with osd directory."
 }
 
 
 ##########################
-# OSD_CEPH_DISK_ACTIVATE #
+# OSD_ACTIVATE #
 ##########################
 
 function osd_activate {
@@ -283,6 +309,27 @@ function osd_activate {
 
   echo "OSD activated."
 }
+
+##########################
+# OSD_ZAP #
+##########################
+
+function osd_zap {
+  if [[ -z "${OSD_DEVICE}" ]];then
+    echo "ERROR- You must provide a device to zap ie: /dev/sdb"
+    exit 1
+  fi
+
+  if [[ "$(parted --script ${OSD_DEVICE} print | egrep '^ 1.*ceph data')" && ${OSD_FORCE_ZAP} -eq "1" ]]; then
+    echo "Device Zapped."
+    ceph-disk -v zap ${OSD_DEVICE}
+  else
+    echo "ERROR- Ceph data partition not found."
+    exit 1
+  fi
+
+}
+
 
 #######
 # MDS #
