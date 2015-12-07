@@ -14,7 +14,7 @@ ENV CONFD_VERSION 0.10.0
 ENV KUBECTL_VERSION v1.0.6
 
 # Install prerequisites
-RUN apt-get update &&  apt-get install -y wget unzip
+RUN apt-get update &&  apt-get install -y wget unzip uuid-runtime
 
 # Install Ceph
 RUN wget -q -O- 'https://download.ceph.com/keys/release.asc' | apt-key add -
