@@ -11,7 +11,7 @@ ENV CEPH_VERSION hammer
 
 ENV KVIATOR_VERSION 0.0.5
 ENV CONFD_VERSION 0.10.0
-ENV KUBECTL_VERSION v1.0.6
+ENV KUBECTL_VERSION v1.1.2
 
 # Install prerequisites
 RUN apt-get update &&  apt-get install -y wget unzip

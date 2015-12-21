@@ -4,7 +4,7 @@
 #
 # VERSION 0.0.1
 
-FROM quay.io/acaleph/ceph-base:kubernetes
+FROM quay.io/acaleph/ceph-base:hammer
 MAINTAINER Sébastien Han "seb@redhat.com"
 
 RUN apt-get update && apt-get -y install runit && \
