@@ -1,0 +1,3 @@
+*.keyring
+ceph.conf
+ceph-client-key
