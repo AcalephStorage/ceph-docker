@@ -80,6 +80,9 @@ spec:
               value: osd_disk
             - name: OSD_DEVICE
               value: /dev/sdb
+            # Override CRUSH location for these OSDs in this DS
+            # - name: CRUSH_LOCATION
+            #   value: "root=default host=${HOSTNAME}"
           livenessProbe:
               tcpSocket:
                 port: 6800
