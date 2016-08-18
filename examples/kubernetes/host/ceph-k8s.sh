@@ -17,6 +17,7 @@ function config_create() {
 
   cd generator
   kubectl create secret generic ceph-conf-combined --from-file=ceph.conf --from-file=ceph.client.admin.keyring --from-file=ceph.mon.keyring --namespace=ceph
+  kubectl create secret generic ceph-conf-combined --from-file=ceph.conf --from-file=ceph.client.admin.keyring --from-file=ceph.mon.keyring
   kubectl create secret generic ceph-bootstrap-rgw-keyring --from-file=ceph.keyring=ceph.rgw.keyring --namespace=ceph
   kubectl create secret generic ceph-bootstrap-mds-keyring --from-file=ceph.keyring=ceph.mds.keyring --namespace=ceph
   kubectl create secret generic ceph-bootstrap-osd-keyring --from-file=ceph.keyring=ceph.osd.keyring --namespace=ceph
@@ -127,6 +128,22 @@ function mds_create() {
   --namespace=ceph
 }
 
+function exp() {
+  case "$1" in
+    get)    shift; exp_get "$@";;
+    create)   shift; exp_create "$@";;
+    *)      usage;;
+  esac
+}
+
+function exp_get() {
+  kubectl get pods --selector="app=ceph-exporter"
+}
+
+function exp_create() {
+  kubectl create \
+  -f ceph-exporter.yaml
+}
 
 function mon_pod() {
   PODNAME=`kubectl get pods --selector="app=ceph,daemon=mon" --output=template --template="{{with index .items 0}}{{.metadata.name}}{{end}}" --namespace=ceph`
@@ -158,7 +175,8 @@ function usage() {
   echo "  rgw create  - Launch RGW resource on Kubernetes (Coming Soon)"
   echo "  nfs get - Query Kubernetes for all NFS pods (Coming Soon)"
   echo "  nfs create <cephfs|rgw> - Launch NFS resource on Kubernetes (Coming Soon)"
-	echo
+	echo "  exp create - Create prometheus ceph exporter"
+  echo "  exp get - Query prometheus ceph exporter"
 }
 
 function main() {
@@ -169,6 +187,7 @@ function main() {
     mon)		shift; mon "$@";;
     osd)		shift; osd "$@";;
     mds)		shift; mds "$@";;
+    exp)    shift; exp "$@";;
 		*)			usage;;
 	esac
 }
