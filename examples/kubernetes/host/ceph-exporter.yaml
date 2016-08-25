@@ -7,6 +7,7 @@ metadata:
   labels:
     app: ceph-exporter
   name: ceph-exporter
+  namespace: ceph
 spec:
   clusterIP: None
   ports:
@@ -21,6 +22,7 @@ spec:
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
+  namespace: ceph
   name: ceph-exporter
   annotations:
     prometheus.io/scrape: 'true'
