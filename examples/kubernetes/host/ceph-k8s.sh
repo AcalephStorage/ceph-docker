@@ -127,6 +127,30 @@ function mds_create() {
   --namespace=ceph
 }
 
+function rgw() {
+  case "$1" in
+    get)		shift; rgw_get "$@";;
+    create)		shift; rgw_create "$@";;
+    command)		shift; rgw_command "$@";;
+    *)			usage;;
+  esac
+}
+
+function rgw_get() {
+  kubectl get pods --selector="app=ceph,daemon=rgw" --namespace=ceph
+}
+
+function rgw_create() {
+  kubectl create \
+  -f ceph-rgw-v1-dp.yaml \
+  --namespace=ceph
+}
+
+function rgw_command() {
+  rgw_pod
+  kubectl exec -it $PODNAME --namespace=ceph -- "$@"
+}
+
 function exp() {
   case "$1" in
     get)    shift; exp_get "$@";;
@@ -152,6 +176,9 @@ function osd_pod() {
   PODNAME=`kubectl get pods --selector="app=ceph,daemon=osd" --output=template --template="{{with index .items 0}}{{.metadata.name}}{{end}}" --namespace=ceph`
 }
 
+function rgw_pod() {
+  PODNAME=`kubectl get pods --selector="app=ceph,daemon=rgw" --output=template --template="{{with index .items 0}}{{.metadata.name}}{{end}}" --namespace=ceph`
+}
 
 function usage() {
 	echo "Usage: ceph-k8s <subcommand>"
@@ -170,8 +197,9 @@ function usage() {
   echo "  osd command <ceph|rbd> - Execute raw ceph or rbd commands on an OSD"
   echo "  mds get - Query Kubernetes for all MDS pods"
   echo "  mds create  - Launch MDS resource on Kubernetes"
-  echo "  rgw get - Query Kubernetes for all RGW pods (Coming Soon)"
-  echo "  rgw create  - Launch RGW resource on Kubernetes (Coming Soon)"
+  echo "  rgw get - Query Kubernetes for all RGW pods"
+  echo "  rgw create  - Launch RGW resource on Kubernetes"
+  echo "  rgw command <radosgw-admin>  - Execute radosgw-admin on an RGW"
   echo "  nfs get - Query Kubernetes for all NFS pods (Coming Soon)"
   echo "  nfs create <cephfs|rgw> - Launch NFS resource on Kubernetes (Coming Soon)"
 	echo "  exp create - Create prometheus ceph exporter"
@@ -186,6 +214,7 @@ function main() {
     mon)		shift; mon "$@";;
     osd)		shift; osd "$@";;
     mds)		shift; mds "$@";;
+    rgw)		shift; rgw "$@";;
     exp)    shift; exp "$@";;
 		*)			usage;;
 	esac
