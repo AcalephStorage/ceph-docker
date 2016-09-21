@@ -151,6 +151,21 @@ function rgw_command() {
   kubectl exec -it $PODNAME --namespace=ceph -- "$@"
 }
 
+function nfs_get() {
+  kubectl get pods --selector="app=ceph,daemon=nfs-rgw" --namespace=ceph
+}
+
+function nfs_create() {
+  kubectl create \
+  -f ceph-rgw-v1-dp.yaml \
+  --namespace=ceph
+}
+
+function rgw_command() {
+  rgw_pod
+  kubectl exec -it $PODNAME --namespace=ceph -- "$@"
+}
+
 function exp() {
   case "$1" in
     get)    shift; exp_get "$@";;
@@ -180,6 +195,10 @@ function rgw_pod() {
   PODNAME=`kubectl get pods --selector="app=ceph,daemon=rgw" --output=template --template="{{with index .items 0}}{{.metadata.name}}{{end}}" --namespace=ceph`
 }
 
+function nfs_pod() {
+  PODNAME=`kubectl get pods --selector="app=ceph,daemon=nfs-rgw" --output=template --template="{{with index .items 0}}{{.metadata.name}}{{end}}" --namespace=ceph`
+}
+
 function usage() {
 	echo "Usage: ceph-k8s <subcommand>"
 	echo
@@ -200,8 +219,8 @@ function usage() {
   echo "  rgw get - Query Kubernetes for all RGW pods"
   echo "  rgw create  - Launch RGW resource on Kubernetes"
   echo "  rgw command <radosgw-admin>  - Execute radosgw-admin on an RGW"
-  echo "  nfs get - Query Kubernetes for all NFS pods (Coming Soon)"
-  echo "  nfs create <cephfs|rgw> - Launch NFS resource on Kubernetes (Coming Soon)"
+  echo "  nfs get - Query Kubernetes for all NFS pods"
+  echo "  nfs create <cephfs|rgw> - Launch NFS resource on Kubernetes"
 	echo "  exp create - Create prometheus ceph exporter"
   echo "  exp get - Query prometheus ceph exporter"
 }
@@ -215,6 +234,7 @@ function main() {
     osd)		shift; osd "$@";;
     mds)		shift; mds "$@";;
     rgw)		shift; rgw "$@";;
+    nfs)		shift; nfs "$@";;
     exp)    shift; exp "$@";;
 		*)			usage;;
 	esac
