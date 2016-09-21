@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ceph-nfs-rgw-conf
+  namespace: ceph
+data:
+  ganesha.conf: |
+    EXPORT {
+    	Export_ID = 20134;
+
+    	Path = "/";
+
+    	Pseudo = "/ceph";
+
+    	Access_Type = RW;
+
+    	NFS_Protocols = 4;
+
+    	Transport_Protocols = TCP;
+
+    	FSAL {
+    		Name = RGW;
+    		User_Id = "hunter";
+    		Access_Key_Id ="DXS7X96Y2EBTMMFK2ZCO";
+    		Secret_Access_Key = "jBD2dFw2pi5QQJaunp5YcHDulfa44lY6GsCTzU0p";
+    	}
+    }
+
+    RGW {
+      ceph_conf = "/etc/ceph/ceph.conf";
+      cluster = "ceph";
+    }
+
+
+    LOG {
+            Facility {
+                    name = FILE;
+                    destination = STDOUT;
+                    enable = active;
+            }
+    }
