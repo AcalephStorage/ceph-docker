@@ -1,0 +1,10 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: ceph-rgw
+spec:
+  ports:
+    - name: rgw-http
+      port: 8080
+  selector:
+    daemon: rgw

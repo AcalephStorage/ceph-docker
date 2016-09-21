@@ -34,7 +34,8 @@ spec:
         - name: ceph-rgw
           image: ceph/daemon:latest
           ports:
-            - containerPort: 8080
+            - name: rgw-http
+              containerPort: 8080
           env:
             - name: CEPH_DAEMON
               value: RGW
