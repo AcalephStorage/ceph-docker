@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ceph-nfs-mds-conf
+  namespace: ceph
+data:
+  ganesha.conf: |
+    EXPORT {
+    	Export_ID = 20135;
+
+    	Path = "/";
+
+    	Pseudo = "/cephfs";
+
+    	Access_Type = RW;
+
+    	NFS_Protocols = 4;
+
+    	Transport_Protocols = TCP;
+
+    	FSAL {
+    		Name = CEPH;
+    	}
+    }
+
+    LOG {
+            Facility {
+                    name = FILE;
+                    destination = STDOUT;
+                    enable = active;
+            }
+    }

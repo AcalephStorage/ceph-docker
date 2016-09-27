@@ -1,0 +1,99 @@
+---
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  labels:
+    app: ceph
+    daemon: nfs-mds
+  name: ceph-nfs-mds
+  namespace: ceph
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: ceph-nfs-mds
+      namespace: ceph
+      labels:
+        app: ceph
+        daemon: nfs-mds
+    spec:
+      nodeSelector:
+        node-type: storage
+      serviceAccount: default
+      volumes:
+        - name: ceph-conf
+          secret:
+            secretName: ceph-conf-combined
+        - name: ceph-bootstrap-osd-keyring
+          secret:
+            secretName: ceph-bootstrap-osd-keyring
+        - name: ceph-bootstrap-rgw-keyring
+          secret:
+            secretName: ceph-bootstrap-rgw-keyring
+        - name: ceph-admin-keyring
+          secret:
+            secretName: ceph-conf-combined
+            items:
+            - key: ceph.client.admin.keyring
+              path: keyring
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+        - name: ganesha-conf
+          configMap:
+            name: ceph-nfs-mds-conf
+            items:
+            - key: ganesha.conf
+              path: ganesha.conf
+      containers:
+        - name: ceph-nfs-mds
+          image: ceph/daemon:tag-build-master-jewel-centos-7
+          ports:
+            - name: nfs
+              containerPort: 2049
+            - name: mountd
+              containerPort: 20048
+            - name: rpcbind
+              containerPort: 111
+          env:
+            - name: CEPH_DAEMON
+              value: NFS
+            - name: KV_TYPE
+              value: k8s
+            - name: CLUSTER
+              value: ceph
+            - name: CEPH_PUBLIC_NETWORK
+              value: 10.0.0.0/24
+            - name: CEPH_CLUSTER_NETWORK
+              value: 10.0.0.0/24
+          volumeMounts:
+            - name: localtime
+              mountPath: /etc/localtime
+            - name: ceph-conf
+              mountPath: /etc/ceph
+            - name: ganesha-conf
+              mountPath: /etc/ganesha
+            - name: ceph-bootstrap-osd-keyring
+              mountPath: /var/lib/ceph/bootstrap-osd
+            - name: ceph-bootstrap-rgw-keyring
+              mountPath: /var/lib/ceph/bootstrap-rgw
+            - name: ceph-admin-keyring
+              mountPath: /var/lib/ceph/radosgw/ceph-admin
+          securityContext:
+            privileged: true
+          livenessProbe:
+              tcpSocket:
+                port: 2049
+              initialDelaySeconds: 60
+              timeoutSeconds: 5
+          readinessProbe:
+              tcpSocket:
+                port: 2049
+              timeoutSeconds: 5
+          resources:
+            requests:
+              memory: "50Mi"
+              cpu: "250m"
+            limits:
+              memory: "100Mi"
+              cpu: "500m"
