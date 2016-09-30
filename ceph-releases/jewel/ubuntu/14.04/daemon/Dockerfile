@@ -4,7 +4,7 @@
 #
 # VERSION 0.0.1
 
-FROM ceph/base:tag-build-master-jewel-ubuntu-14.04
+FROM quay.io/acaleph/ceph-base:10.2.3-trusty-1
 MAINTAINER Sébastien Han "seb@redhat.com"
 
 ADD my_init/my_init /sbin/my_init
