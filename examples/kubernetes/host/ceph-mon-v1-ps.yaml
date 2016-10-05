@@ -9,20 +9,21 @@ metadata:
   namespace: ceph
 spec:
   serviceName: ceph-mon
-  replicas: 1
+  replicas: 3
   template:
     metadata:
-      name: ceph-mon
-      namespace: ceph
       labels:
         app: ceph
         daemon: mon
+      annotations:
+        pod.alpha.kubernetes.io/initialized: "true"
     spec:
       nodeSelector:
         node-type: storage
-        # ceph-mon: "true"
+        ceph-mon: "true"
       serviceAccount: default
       hostNetwork: true
+      hostPID: true
       dnsPolicy: ClusterFirst
       volumes:
         - name: ceph-conf
@@ -42,7 +43,7 @@ spec:
            path: /var/lib/ceph/mon
       containers:
         - name: ceph-mon
-          image: ceph/daemon:latest
+          image: quay.io/acaleph/ceph-daemon:10.2.3-trusty-1
           imagePullPolicy: Always
           securityContext:
             privileged: true
@@ -61,14 +62,18 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             - name: MON_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
             - name: CEPH_PUBLIC_NETWORK
-              value: 10.0.0.0/24
+              value: 10.0.0.0/8
             - name: CEPH_CLUSTER_NETWORK
-              value: 10.0.0.0/24
+              value: 10.0.0.0/8
           volumeMounts:
             - name: ceph-conf
               mountPath: /etc/ceph
@@ -89,10 +94,10 @@ spec:
               tcpSocket:
                 port: 6789
               timeoutSeconds: 5
-          resources:
-            requests:
-              memory: "50Mi"
-              cpu: "250m"
-            limits:
-              memory: "100Mi"
-              cpu: "500m"
+          # resources:
+          #   requests:
+          #     memory: "50Mi"
+          #     cpu: "250m"
+          #   limits:
+          #     memory: "100Mi"
+          #     cpu: "500m"
