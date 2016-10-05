@@ -48,7 +48,7 @@ spec:
             path: /var/lib/ceph/osd
       containers:
         - name: osd-pod
-          image: ceph/daemon:latest
+          image: quay.io/acaleph/ceph-daemon:10.2.3-trusty-1
           imagePullPolicy: Always
           volumeMounts:
             - name: devices
