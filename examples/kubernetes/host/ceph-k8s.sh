@@ -132,6 +132,7 @@ function rgw() {
     get)		shift; rgw_get "$@";;
     create)		shift; rgw_create "$@";;
     command)		shift; rgw_command "$@";;
+    add_user)		shift; rgw_add_user "$@";;
     *)			usage;;
   esac
 }
@@ -149,6 +150,11 @@ function rgw_create() {
 function rgw_command() {
   rgw_pod
   kubectl exec -it $PODNAME --namespace=ceph -- "$@"
+}
+
+function rgw_add_user() {
+  rgw_pod
+  kubectl exec -it $PODNAME --namespace=ceph -- radosgw-admin user create --uid=$1 --display-name="RGW $1 User"
 }
 
 function nfs_get() {
@@ -219,6 +225,7 @@ function usage() {
   echo "  rgw get - Query Kubernetes for all RGW pods"
   echo "  rgw create  - Launch RGW resource on Kubernetes"
   echo "  rgw command <radosgw-admin>  - Execute radosgw-admin on an RGW"
+  echo "  rgw add_user <username>  - Add a user to RGW"
   echo "  nfs get - Query Kubernetes for all NFS pods"
   echo "  nfs create <cephfs|rgw> - Launch NFS resource on Kubernetes"
 	echo "  exp create - Create prometheus ceph exporter"
