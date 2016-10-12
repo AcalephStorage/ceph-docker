@@ -21,9 +21,12 @@ spec:
         node-type: storage
       serviceAccount: default
       volumes:
-        - name: ceph-conf
+        - name: ceph-secrets
           secret:
-            secretName: ceph-conf-combined
+            secretName: ceph-secrets-combined
+        - name: ceph-conf
+          configMap:
+            name: ceph-conf
         - name: ceph-bootstrap-osd-keyring
           secret:
             secretName: ceph-bootstrap-osd-keyring
@@ -70,8 +73,10 @@ spec:
           volumeMounts:
             - name: localtime
               mountPath: /etc/localtime
+            - name: ceph-secrets
+              mountPath: /etc/ceph/secrets
             - name: ceph-conf
-              mountPath: /etc/ceph
+              mountPath: /etc/ceph/conf
             - name: ganesha-conf
               mountPath: /etc/ganesha
             - name: ceph-bootstrap-osd-keyring

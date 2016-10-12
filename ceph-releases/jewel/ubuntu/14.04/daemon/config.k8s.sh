@@ -19,7 +19,12 @@ function get_mon_config {
 }
 
 function get_config {
-   # No-op for static
-   echo "k8s: config is stored as k8s secrets."
-}
+   # K8s currently mounts configmaps/secrets in its own tmpfs.
+   # Work around with Symlinks
 
+   echo "k8s: Symlinking secrets"
+   ln -s /etc/ceph/secrets/* /etc/ceph/
+
+   echo "k8s: Symlinking ceph.conf"
+   ln -s /etc/ceph/conf/ceph.conf /etc/ceph/ceph.conf
+}

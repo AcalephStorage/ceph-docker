@@ -41,10 +41,14 @@ spec:
             containerPort: 9128
             hostPort: 9128
         volumeMounts:
+          - name: ceph-secrets
+            mountPath: /etc/ceph/secrets
           - name: ceph-conf
-            mountPath: /etc/ceph
-            readOnly: true
+            mountPath: /etc/ceph/conf
       volumes:
-      - name: ceph-conf
-        secret:
-          secretName: ceph-conf-combined
+        - name: ceph-secrets
+          secret:
+            secretName: ceph-secrets-combined
+        - name: ceph-conf
+          configMap:
+            name: ceph-conf
