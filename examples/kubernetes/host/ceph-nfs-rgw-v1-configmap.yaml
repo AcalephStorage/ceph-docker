@@ -14,9 +14,9 @@ data:
 
     	Access_Type = RW;
 
-    	NFS_Protocols = 4;
+    	Protocols = 4;
 
-    	Transport_Protocols = TCP;
+    	Transports = TCP;
 
     	FSAL {
     		Name = RGW;
