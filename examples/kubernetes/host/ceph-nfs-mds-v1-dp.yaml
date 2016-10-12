@@ -47,7 +47,8 @@ spec:
               path: ganesha.conf
       containers:
         - name: ceph-nfs-mds
-          image: ceph/daemon:tag-build-master-jewel-centos-7
+          image: ceph/daemon:tag-build-master-jewel-fedora-24
+          imagePullPolicy: Always
           ports:
             - name: nfs
               containerPort: 2049
