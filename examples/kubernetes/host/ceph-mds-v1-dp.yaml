@@ -47,6 +47,8 @@ spec:
               value: k8s
             - name: CLUSTER
               value: ceph
+            - name: MDS_NAME
+              value: ceph-mds-1
           volumeMounts:
             - name: ceph-conf
               mountPath: /etc/ceph
