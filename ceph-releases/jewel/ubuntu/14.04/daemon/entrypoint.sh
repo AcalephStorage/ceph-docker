@@ -38,6 +38,11 @@ set -e
 : ${KV_PORT:=4001} # PORT 8500 for Consul
 : ${GANESHA_OPTIONS:=""}
 : ${GANESHA_EPOCH:=""} # For restarting
+: ${DEBUG_MODE:=false}
+
+if [ ${DEBUG_MODE} == "true" ]; then
+    set -x
+fi
 
 if [ ! -z "${KV_CA_CERT}" ]; then
 	KV_TLS="--ca-cert=${KV_CA_CERT} --client-cert=${KV_CLIENT_CERT} --client-key=${KV_CLIENT_KEY}"
