@@ -1,21 +1,18 @@
-Ceph on Kubernetes
-==================
+# Ceph on Kubernetes
 
-This Guide will take you through the process of deploying a basic Ceph cluster on to a Kubernetes cluster.
+This Guide will take you through the process of deploying a Ceph cluster on to a Kubernetes cluster.
 
-Client Requirements
-===================
+## Client Requirements
 
-In addition to kubectl, Sigil is required for template handling and must be installed in your system PATH. Instructions can be found here: [https://github.com/gliderlabs/sigil](https://github.com/gliderlabs/sigil)
+In addition to kubectl, Sigil is required for template handling and must be installed in your system PATH. Instructions can be found here: <https://github.com/gliderlabs/sigil>
 
-Cluster Requirements
-====================
+## Cluster Requirements
 
 At a High level:
 
--	The Kubernetes SkyDNS addon needs to be set as a resolver on masters and nodes
--	Ceph and RBD utilities must be installed on masters and nodes
--	Linux Kernel should be newer than 4.2.0
+- The Kubernetes SkyDNS addon needs to be set as a resolver on masters and nodes
+- Ceph and RBD utilities must be installed on masters and nodes
+- Linux Kernel should be newer than 4.2.0
 
 ### SkyDNS Resolution
 
@@ -55,14 +52,13 @@ You'll need a newer kernel to use this. Kernel panics have been observed on olde
 
 This has been tested on:
 
--	Ubuntu 15.10
+- Ubuntu 15.10
 
 This will not work on:
 
--	Debian 8.5
+- Debian 8.5
 
-Quickstart
-==========
+## Quickstart
 
 If you're feeling confident:
 
@@ -76,12 +72,11 @@ This will most likely not work on your setup, see the rest of the guide if you e
 
 We will be working on making this setup more agnostic, especially in regards to the network IP ranges.
 
-Tutorial
-========
+## Tutorial
 
 ### Override the default network settings
 
-By default, 10.244.0.0/16 is used for the `cluster_network` and `public_network` in ceph.conf. To change these defaults, set the following environment variables according to your network requirements. These IPs should be set according to the range of your Pod IPs in your kubernetes cluster:
+By default, `10.244.0.0/16` is used for the `cluster_network` and `public_network` in ceph.conf. To change these defaults, set the following environment variables according to your network requirements. These IPs should be set according to the range of your Pod IPs in your kubernetes cluster:
 
 ```
 export osd_cluster_network=192.168.0.0/16

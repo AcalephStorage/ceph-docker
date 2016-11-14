@@ -6,11 +6,27 @@ set -e
 : ${MON_NAME:=$(hostname -s)}
 : ${RGW_CIVETWEB_PORT:=80}
 : ${NETWORK_AUTO_DETECT:=0}
+: ${RESTAPI_IP:=0.0.0.0}
+: ${RESTAPI_PORT:=5000}
+: ${RESTAPI_BASE_URL:=/api/v0.1}
+: ${RESTAPI_LOG_LEVEL:=warning}
+: ${RESTAPI_LOG_FILE:=/var/log/ceph/ceph-restapi.log}
 
 CEPH_OPTS="--cluster ${CLUSTER}"
 
 
 # FUNCTIONS
+# Log arguments with timestamp
+function log {
+  if [ -z "$*" ]; then
+    return 1
+  fi
+
+  TIMESTAMP=$(date '+%F %T')
+  echo "${TIMESTAMP}  $0: $*"
+  return 0
+}
+
 function create_socket_dir {
   mkdir -p /var/run/ceph
   chown ceph. /var/run/ceph
@@ -22,12 +38,12 @@ function create_socket_dir {
 
 function bootstrap_mon {
   if [[ ! -n "$CEPH_PUBLIC_NETWORK" && ${NETWORK_AUTO_DETECT} -eq 0 ]]; then
-    echo "ERROR- CEPH_PUBLIC_NETWORK must be defined as the name of the network for the OSDs"
+    log "ERROR- CEPH_PUBLIC_NETWORK must be defined as the name of the network for the OSDs"
     exit 1
   fi
 
   if [[ ! -n "$MON_IP" && ${NETWORK_AUTO_DETECT} -eq 0 ]]; then
-    echo "ERROR- MON_IP must be defined as the IP address of the monitor"
+    log "ERROR- MON_IP must be defined as the IP address of the monitor"
     exit 1
   fi
 
@@ -58,7 +74,7 @@ function bootstrap_mon {
   fi
 
   if [[ -z "$MON_IP" || -z "$CEPH_PUBLIC_NETWORK" ]]; then
-    echo "ERROR- it looks like we have not been able to discover the network settings"
+    log "ERROR- it looks like we have not been able to discover the network settings"
     exit 1
   fi
 
@@ -97,24 +113,24 @@ ENDHERE
     ceph-authtool /etc/ceph/${CLUSTER}.mon.keyring --create-keyring --gen-key -n mon. --cap mon 'allow *'
 
     # Generate initial monitor map
-    monmaptool --create --add ${MON_NAME} ${MON_IP} --fsid ${fsid} /etc/ceph/${CLUSTER}.monmap
+    monmaptool --create --add ${MON_NAME} ${MON_IP} --fsid ${fsid} /etc/ceph/monmap-${CLUSTER}
   fi
 
   # If we don't have a monitor keyring, this is a new monitor
   if [ ! -e /var/lib/ceph/mon/${CLUSTER}-${MON_NAME}/keyring ]; then
 
     if [ ! -e /etc/ceph/${CLUSTER}.client.admin.keyring ]; then
-      echo "ERROR- /etc/ceph/${CLUSTER}.client.admin.keyring must exist; get it from your existing mon"
+      log "ERROR- /etc/ceph/${CLUSTER}.client.admin.keyring must exist; get it from your existing mon"
       exit 2
     fi
 
     if [ ! -e /etc/ceph/${CLUSTER}.mon.keyring ]; then
-      echo "ERROR- /etc/ceph/${CLUSTER}.mon.keyring must exist.  You can extract it from your current monitor by running 'ceph ${CEPH_OPTS} auth get mon. -o /tmp/${CLUSTER}.mon.keyring'"
+      log "ERROR- /etc/ceph/${CLUSTER}.mon.keyring must exist.  You can extract it from your current monitor by running 'ceph ${CEPH_OPTS} auth get mon. -o /tmp/${CLUSTER}.mon.keyring'"
       exit 3
     fi
 
-    if [ ! -e /etc/ceph/${CLUSTER}.monmap ]; then
-      echo "ERROR- /etc/ceph/${CLUSTER}.monmap must exist.  You can extract it from your current monitor by running 'ceph ${CEPH_OPTS} mon getmap -o /tmp/monmap'"
+    if [ ! -e /etc/ceph/monmap-${CLUSTER} ]; then
+      log "ERROR- /etc/ceph/monmap-${CLUSTER} must exist.  You can extract it from your current monitor by running 'ceph ${CEPH_OPTS} mon getmap -o /tmp/monmap-${CLUSTER}'"
       exit 4
     fi
 
@@ -130,8 +146,8 @@ ENDHERE
 
     # Prepare the monitor daemon's directory with the map and keyring
     chown -R ceph. /var/lib/ceph/mon
-    ceph-mon ${CEPH_OPTS} --mkfs -i ${MON_NAME} --monmap /etc/ceph/${CLUSTER}.monmap --keyring /tmp/${CLUSTER}.mon.keyring
-    ceph-mon ${CEPH_OPTS} --setuser ceph --setgroup ceph --mkfs -i ${MON_NAME} --monmap /etc/ceph/monmap --keyring /tmp/${CLUSTER}.mon.keyring --mon-data /var/lib/ceph/mon/${CLUSTER}-${MON_NAME}
+    ceph-mon ${CEPH_OPTS} --mkfs -i ${MON_NAME} --monmap /etc/ceph/monmap-${CLUSTER} --keyring /tmp/${CLUSTER}.mon.keyring
+    ceph-mon ${CEPH_OPTS} --setuser ceph --setgroup ceph --mkfs -i ${MON_NAME} --monmap /etc/ceph/monmap-${CLUSTER} --keyring /tmp/${CLUSTER}.mon.keyring --mon-data /var/lib/ceph/mon/${CLUSTER}-${MON_NAME}
 
     # Clean up the temporary key
     rm /tmp/${CLUSTER}.mon.keyring
@@ -208,10 +224,10 @@ function bootstrap_rgw {
 function bootstrap_demo_user {
   if [ -n "$CEPH_DEMO_UID" ] && [ -n "$CEPH_DEMO_ACCESS_KEY" ] && [ -n "$CEPH_DEMO_SECRET_KEY" ]; then
     if [ -f /ceph-demo-user ]; then
-      echo "Demo user already exists with credentials:"
+      log "Demo user already exists with credentials:"
       cat /ceph-demo-user
     else
-      echo "Setting up a demo user..."
+      log "Setting up a demo user..."
       radosgw-admin user create --uid=$CEPH_DEMO_UID --display-name="Ceph demo user" --access-key=$CEPH_DEMO_ACCESS_KEY --secret-key=$CEPH_DEMO_SECRET_KEY
       sed -i s/AWS_ACCESS_KEY_PLACEHOLDER/$CEPH_DEMO_ACCESS_KEY/ /root/.s3cfg
       sed -i s/AWS_SECRET_KEY_PLACEHOLDER/$CEPH_DEMO_SECRET_KEY/ /root/.s3cfg
@@ -219,7 +235,7 @@ function bootstrap_demo_user {
       echo "Secret key: $CEPH_DEMO_SECRET_KEY" >> /ceph-demo-user
 
       if [ -n "$CEPH_DEMO_BUCKET" ]; then
-        echo "Creating bucket..."
+        log "Creating bucket..."
         s3cmd mb s3://$CEPH_DEMO_BUCKET
       fi
     fi
@@ -245,6 +261,16 @@ function bootstrap_nfs {
 #######
 
 function bootstrap_rest_api {
+  if [[ ! "$(egrep "\[client.restapi\]" /etc/ceph/${CLUSTER}.conf)" ]]; then
+    cat <<ENDHERE >>/etc/ceph/${CLUSTER}.conf
+[client.restapi]
+  public addr = ${RESTAPI_IP}:${RESTAPI_PORT}
+  restapi base url = ${RESTAPI_BASE_URL}
+  restapi log level = ${RESTAPI_LOG_LEVEL}
+  log file = ${RESTAPI_LOG_FILE}
+ENDHERE
+		fi
+
   # start ceph-rest-api
   ceph-rest-api ${CEPH_OPTS} -n client.admin &
 }
@@ -261,5 +287,5 @@ bootstrap_rgw
 bootstrap_demo_user
 bootstrap_rest_api
 bootstrap_nfs
-
+log "SUCCESS"
 exec ceph ${CEPH_OPTS} -w

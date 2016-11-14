@@ -3,7 +3,7 @@ set -e
 
 function get_admin_key {
    # No-op for static
-   echo "k8s: does not generate admin key. Use secrets instead."
+   log "k8s: does not generate admin key. Use secrets instead."
 }
 
 function get_mon_config {
@@ -19,6 +19,8 @@ function get_mon_config {
 }
 
 function get_config {
+   # No-op for static
+   log "k8s: config is stored as k8s secrets."
    # K8s currently mounts configmaps/secrets in its own tmpfs.
    # Work around with Symlinks
 

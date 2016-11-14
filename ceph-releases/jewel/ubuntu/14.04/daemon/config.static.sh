@@ -3,7 +3,7 @@ set -e
 
 function get_admin_key {
    # No-op for static
-   echo "static: does not generate admin key"
+   log "static: does not generate admin key"
 }
 
 function get_mon_config {
@@ -22,14 +22,16 @@ cluster network = ${CEPH_CLUSTER_NETWORK}
 osd journal size = ${OSD_JOURNAL_SIZE}
 ENDHERE
 
-    if [[ ! -z "$(ip -6 -o a | grep scope.global | awk '/eth/ { sub ("/..", "", $4); print $4 }' | head -n1)" ]]; then
-      echo "ms_bind_ipv6 = true" >> /etc/ceph/${CLUSTER}.conf
-      sed -i '/mon host/d' /etc/ceph/${CLUSTER}.conf
-      echo "mon host = ${MON_IP}" >> /etc/ceph/${CLUSTER}.conf
+    if command -v ip; then
+      if [[ ! -z "$(ip -6 -o a | grep scope.global | awk '/eth/ { sub ("/..", "", $4); print $4 }' | head -n1)" ]]; then
+        echo "ms_bind_ipv6 = true" >> /etc/ceph/${CLUSTER}.conf
+        sed -i '/mon host/d' /etc/ceph/${CLUSTER}.conf
+        echo "mon host = ${MON_IP}" >> /etc/ceph/${CLUSTER}.conf
+      fi
     fi
-    else
-      # extract fsid from ceph.conf
-      fsid=`grep "fsid" /etc/ceph/${CLUSTER}.conf |awk '{print $NF}'`
+  else
+    # extract fsid from ceph.conf
+    fsid=`grep "fsid" /etc/ceph/${CLUSTER}.conf |awk '{print $NF}'`
   fi
 
   if [ ! -e /etc/ceph/${CLUSTER}.client.admin.keyring ]; then
@@ -79,6 +81,6 @@ ENDHERE
 
 function get_config {
    # No-op for static
-   echo "static: does not generate config"
+   log "static: does not generate config"
 }
 
