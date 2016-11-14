@@ -7,6 +7,9 @@ function get_admin_key {
 }
 
 function get_mon_config {
+  # Need to symlink the configs before use
+  get_config
+
   # Get FSID from ceph.conf
   FSID=$(ceph-conf --lookup fsid -c /etc/ceph/ceph.conf)
 
@@ -24,9 +27,9 @@ function get_config {
    # K8s currently mounts configmaps/secrets in its own tmpfs.
    # Work around with Symlinks
 
-   echo "k8s: Symlinking secrets"
+   log "k8s: Symlinking secrets"
    ln -s /etc/ceph/secrets/* /etc/ceph/
 
-   echo "k8s: Symlinking ceph.conf"
+   log "k8s: Symlinking ceph.conf"
    ln -s /etc/ceph/conf/ceph.conf /etc/ceph/ceph.conf
 }
