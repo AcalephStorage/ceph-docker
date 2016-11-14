@@ -38,7 +38,7 @@ spec:
             secretName: ceph-bootstrap-rgw-keyring
       containers:
         - name: ceph-mds
-          image: ceph/daemon:latest
+          image: quay.io/acaleph/ceph-daemon:more-kube-examples
           ports:
             - containerPort: 6800
           env:
@@ -52,6 +52,8 @@ spec:
               value: ceph
             - name: MDS_NAME
               value: ceph-mds-1
+            - name: DEBUG_MODE
+              value: "true"
           volumeMounts:
             - name: ceph-secrets
               mountPath: /etc/ceph/secrets

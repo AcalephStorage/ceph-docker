@@ -19,7 +19,7 @@ spec:
     spec:
       nodeSelector:
         node-type: storage
-      serviceAccount: default
+      hostname: ceph-rgw-0
       volumes:
         - name: ceph-secrets
           secret:
@@ -35,7 +35,7 @@ spec:
             secretName: ceph-bootstrap-rgw-keyring
       containers:
         - name: ceph-rgw
-          image: ceph/daemon:latest
+          image: quay.io/acaleph/ceph-daemon:more-kube-examples
           ports:
             - name: rgw-http
               containerPort: 8080
@@ -46,6 +46,8 @@ spec:
               value: k8s
             - name: CLUSTER
               value: ceph
+            - name: DEBUG_MODE
+              value: "true"
           volumeMounts:
             - name: ceph-secrets
               mountPath: /etc/ceph/secrets
