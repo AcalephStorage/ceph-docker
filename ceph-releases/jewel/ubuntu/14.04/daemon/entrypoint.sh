@@ -991,6 +991,15 @@ function watch_mon_health {
   done
 }
 
+##################
+# CEPH DISK INIT #
+##################
+
+function ceph_disk_init {
+  echo "Zapping and preparing disk until successful"
+  /ceph-disk-init.sh
+}
+
 
 ###############
 # CEPH_DAEMON #
@@ -1059,6 +1068,10 @@ case "$CEPH_DAEMON" in
   mon_health)
     watch_mon_health
     ;;
+  ceph_disk_init)
+    ceph_disk_init
+    ;;
+
   *)
   if [ ! -n "$CEPH_DAEMON" ]; then
     log "ERROR- One of CEPH_DAEMON or a daemon parameter must be defined as the name "
