@@ -996,6 +996,7 @@ function watch_mon_health {
 ##################
 
 function ceph_disk_init {
+  get_config
   echo "Zapping and preparing disk until successful"
   /ceph-disk-init.sh
 }
