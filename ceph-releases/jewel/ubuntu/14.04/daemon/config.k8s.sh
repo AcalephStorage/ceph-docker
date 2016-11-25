@@ -49,8 +49,12 @@ function get_config {
    # Work around with Symlinks
 
    log "k8s: Symlinking secrets"
-   ln -s /etc/ceph/secrets/* /etc/ceph/
+   if [[ ! -f /etc/ceph/ceph.client.admin.keyring ]]; then
+     ln -s /etc/ceph/secrets/* /etc/ceph/
+   fi
 
    log "k8s: Symlinking ceph.conf"
-   ln -s /etc/ceph/conf/ceph.conf /etc/ceph/ceph.conf
+   if [[ ! -f /etc/ceph/ceph.conf ]]; then
+     ln -s /etc/ceph/conf/ceph.conf /etc/ceph/ceph.conf
+   fi
 }
