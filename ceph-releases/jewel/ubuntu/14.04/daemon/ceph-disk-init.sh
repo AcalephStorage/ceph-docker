@@ -17,9 +17,9 @@ fi
 echo "========== Preparing $OSD_DEVICE =========="
 success=false
 while [[ "$success" == "false" ]]; do
-    echo "=====> Zapping Device...
+    echo "=====> Zapping Device..."
     sgdisk -Z $OSD_DEVICE
-    echo "=====> Preparing Device...
+    echo "=====> Preparing Device..."
     ceph-disk prepare $OSD_DEVICE
     if [[ "$?" == "0" ]]; then
         echo "=====> SUCCESS!!!"
