@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# defaults to `pod-name`. set to mon-name to use name MON_NAME value instead
+: ${K8S_MONMAP_NAME_FROM:=pod-name}
+
 function get_admin_key {
    # No-op for static
    log "k8s: does not generate admin key. Use secrets instead."
@@ -13,8 +16,12 @@ function get_mon_config {
   # Get FSID from ceph.conf
   FSID=$(ceph-conf --lookup fsid -c /etc/ceph/ceph.conf)
 
-  # Get the ceph mon pods (name and IP) from the Kubernetes API. Formatted as a set of monmap params
-  MONMAP_ADD=$(kubectl get pods --namespace=${CLUSTER} -l daemon=mon -o template --template="{{range .items}}--add {{.metadata.name}} {{.status.podIP}} {{end}}")
+  if [[ "$K8S_MONMAP_NAME_FROM" == "mon-name" ]]; then
+    MONMAP_ADD=${MON_NAME}
+  else
+    # Get the ceph mon pods (name and IP) from the Kubernetes API. Formatted as a set of monmap params
+    MONMAP_ADD=$(kubectl get pods --namespace=${CLUSTER} -l daemon=mon -o template --template="{{range .items}}--add {{.metadata.name}} {{.status.podIP}} {{end}}")
+  fi
 
   # Create a monmap with the Pod Names and IP
   monmaptool --create ${MONMAP_ADD} --fsid ${FSID} /etc/ceph/monmap-${CLUSTER}
