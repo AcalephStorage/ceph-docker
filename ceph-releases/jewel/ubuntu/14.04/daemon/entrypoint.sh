@@ -213,6 +213,7 @@ function populate_kv {
 #######
 
 function start_mon {
+  get_config
   if [[ ! -n "$CEPH_PUBLIC_NETWORK" && ${NETWORK_AUTO_DETECT} -eq 0 ]]; then
     log "ERROR- CEPH_PUBLIC_NETWORK must be defined as the name of the network for the OSDs"
     exit 1
@@ -996,6 +997,7 @@ function watch_mon_health {
 ##################
 
 function ceph_disk_init {
+  get_config
   echo "Zapping and preparing disk until successful"
   /ceph-disk-init.sh
 }
