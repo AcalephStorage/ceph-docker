@@ -23,7 +23,7 @@ function get_mon_config {
   if [[ "$K8S_MONMAP_NAME_FROM" == "mon-name" ]]; then
     log "k8s: adding mons by mon-name"
     # wait for all pods to be at least running or pending (since we're using kubectl exec')
-    expected_pods=$(kubectl get deployment --namespace=ceph -l daemon=mon --no-headers | wc -l)
+    expected_pods=$(kubectl get daemonset --namespace=ceph -l daemon=mon --no-headers | awk '{print $2}')
     log "k8s: waiting for mon pods to be running."
     while [[ "$expected_pods" != "$running_pods" ]]; do
       running_pods=$(kubectl get pods --namespace=ceph -l daemon=mon --no-headers | grep 'Running\|Pending' | wc -l)
