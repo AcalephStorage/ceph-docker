@@ -16,11 +16,8 @@ function get_mon_config {
   while [[ -z "${MONMAP_ADD// }" && "${timeout}" -gt 0 ]]; do
     # Get the ceph mon pods (name/nodeName and IP) from the Kubernetes API. Formatted as a set of monmap params
 
-    # use nodeName if hostNetwork=true
-    hostNework=$(kubectl get statefulset -n ceph ceph-mon -o template --template="{{ .spec.template.spec.hostNetwork }}")
-    K8S_MON_NAME=""
-    if [[ "$hostNetwork" == "true" ]]; then
-      K8S_MON_NAME="{{.spec.nodeName}}"
+    if [[ "${MON_NAME_FROM}" == "HOST" ]]; then
+      K8S_MON_NAME="${MON_NAME}"
     else
       K8S_MON_NAME="{{.metadata.name}}"
     fi
