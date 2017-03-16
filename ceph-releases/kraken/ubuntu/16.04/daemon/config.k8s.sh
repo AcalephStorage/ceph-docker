@@ -14,8 +14,18 @@ function get_mon_config {
   MONMAP_ADD=""
 
   while [[ -z "${MONMAP_ADD// }" && "${timeout}" -gt 0 ]]; do
-    # Get the ceph mon pods (name and IP) from the Kubernetes API. Formatted as a set of monmap params
-    MONMAP_ADD=$(kubectl get pods --namespace=${CLUSTER} -l daemon=mon -o template --template="{{range .items}}{{if .status.podIP}}--add {{.metadata.name}} {{.status.podIP}} {{end}} {{end}}")
+    # Get the ceph mon pods (name/nodeName and IP) from the Kubernetes API. Formatted as a set of monmap params
+
+    # use nodeName if hostNetwork=true
+    hostNework=$(kubectl get statefulset -n ceph ceph-mon -o template --template="{{ .spec.template.spec.hostNetwork }}")
+    K8S_MON_NAME=""
+    if [[ "$hostNetwork" == "true" ]]; then
+      K8S_MON_NAME="{{.spec.nodeName}}"
+    else
+      K8S_MON_NAME="{{.metadata.name}}"
+    fi
+
+    MONMAP_ADD=$(kubectl get pods --namespace=${CLUSTER} -l daemon=mon -o template --template="{{range .items}}{{if .status.podIP}}--add ${K8S_MON_NAME} {{.status.podIP}} {{end}} {{end}}")
     (( timeout-- ))
     sleep 1
   done
