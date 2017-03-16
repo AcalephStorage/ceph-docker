@@ -5,6 +5,7 @@
 : ${CEPH_GET_ADMIN_KEY:=0}
 : ${HOSTNAME:=$(hostname -s)}
 : ${MON_NAME:=${HOSTNAME}}
+: ${MON_NAME_FROM:=POD}
 : ${MON_DATA_DIR:=/var/lib/ceph/mon/${CLUSTER}-${MON_NAME}}
 : ${NETWORK_AUTO_DETECT:=0}
 : ${MDS_NAME:=mds-${HOSTNAME}}
