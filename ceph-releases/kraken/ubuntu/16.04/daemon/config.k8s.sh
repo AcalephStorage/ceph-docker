@@ -9,6 +9,7 @@ function get_admin_key {
 function get_mon_config {
   # Get fsid from ceph.conf
   local fsid=$(ceph-conf --lookup fsid -c /etc/ceph/ceph.conf)
+  log "k8s: adding this mon to ${fsid}"
 
   timeout=10
   MONMAP_ADD=""
@@ -21,13 +22,16 @@ function get_mon_config {
     sleep 1
   done
 
+  log "k8s: monmap=$MONMAP_ADD"
+
   if [[ -z "${MONMAP_ADD// }" ]]; then
+      log "k8s: no monmap entries to add. failing."
       exit 1
   fi
 
   # Create a monmap with the Pod Names and IP
   monmaptool --create ${MONMAP_ADD} --fsid ${fsid} $MONMAP
-
+  log "k8s: monmap successfully generated."
 }
 
 function get_config {
