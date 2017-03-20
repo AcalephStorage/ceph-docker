@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+: ${MON_NAME_FROM:=POD}
+
 function get_admin_key {
    # No-op for static
    log "k8s: does not generate the admin key. Use Kubernetes secrets instead."
@@ -16,8 +18,7 @@ function get_mon_config {
 
   # if it's hostNetwork=true, we use the nodeName instead of the podName.
   mon_name="{{ .metadata.name }}"
-  is_host_network=$(kubectl get pods --namespace=${CLUSTER} -l daemon=mon -o template --template="{{ (index .items 0).spec.hostNetwork }}")
-  if [[ "${is_host_network}" == "true" ]]; then
+  if [[ "${MON_NAME_FROM}" == "HOST" ]]; then
     log "k8s: hostNetwork detected, using nodeName as podName"
     mon_name="{{ .spec.nodeName }}"
   fi
