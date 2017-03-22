@@ -6,6 +6,7 @@
 : ${HOSTNAME:=$(hostname -s)}
 : ${MON_NAME:=${HOSTNAME}}
 : ${MON_DATA_DIR:=/var/lib/ceph/mon/${CLUSTER}-${MON_NAME}}
+: ${K8S_HOST_NETWORK:=0}
 : ${NETWORK_AUTO_DETECT:=0}
 : ${MDS_NAME:=mds-${HOSTNAME}}
 : ${OSD_FORCE_ZAP:=0}
@@ -39,10 +40,16 @@
 : ${KV_PORT:=4001} # PORT 8500 for Consul
 : ${GANESHA_OPTIONS:=""}
 : ${GANESHA_EPOCH:=""} # For restarting
+: ${MGR_NAME:=${HOSTNAME}}
 
-CEPH_OPTS="--cluster ${CLUSTER}"
+# This is ONLY used for the CLI calls, e.g: ceph $CLI_OPTS health
+CLI_OPTS="--cluster ${CLUSTER}"
+
+# This is ONLY used for the daemon's startup, e.g: ceph-osd $DAEMON_OPTS
+DAEMON_OPTS="--cluster ${CLUSTER} --setuser ceph --setgroup ceph -d"
+
 MOUNT_OPTS="-t xfs -o noatime,inode64"
-ETCDCTL_OPT="--peers ${KV_IP}:${KV_PORT}"
+ETCDCTL_OPTS="--peers ${KV_IP}:${KV_PORT}"
 
 # make sure etcd uses http or https as a prefix
 if [[ "$KV_TYPE" == "etcd" ]]; then
@@ -65,6 +72,7 @@ RGW_BOOTSTRAP_KEYRING=/var/lib/ceph/bootstrap-rgw/${CLUSTER}.keyring
 OSD_BOOTSTRAP_KEYRING=/var/lib/ceph/bootstrap-osd/${CLUSTER}.keyring
 OSD_PATH_BASE=/var/lib/ceph/osd/${CLUSTER}
 MONMAP=/etc/ceph/monmap-${CLUSTER}
+MGR_KEYRING=/var/lib/ceph/mgr/${CLUSTER}-${MGR_NAME}/keyring
 
 function get_OSD_path {
   echo "$OSD_PATH_BASE-$1/"
