@@ -7,7 +7,7 @@ MAINTAINER Sébastien Han "seb@redhat.com"
 
 ENV CEPH_VERSION kraken
 ENV CONFD_VERSION 0.10.0
-ENV KUBECTL_VERSION v1.4.0
+ENV KUBECTL_VERSION v1.6.0
 
 # Download confd
 ADD https://github.com/kelseyhightower/confd/releases/download/v${CONFD_VERSION}/confd-${CONFD_VERSION}-linux-amd64 /usr/local/bin/confd
@@ -15,16 +15,17 @@ ADD https://github.com/kelseyhightower/confd/releases/download/v${CONFD_VERSION}
 # Download forego
 ADD https://bin.equinox.io/c/ekMN3bCZFUn/forego-stable-linux-amd64.tgz /forego.tgz
 
+# Packages list
+ARG PACKAGES="ceph-mon ceph-osd ceph-mds ceph-mgr ceph-base ceph-common radosgw rbd-mirror sharutils etcd"
+
 # install prerequisites
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y wget unzip uuid-runtime python-setuptools udev dmsetup && \
 \
 # Install ceph, ganesha and etcd
-    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3FE869A9 && \
-    echo "deb http://ppa.launchpad.net/gluster/nfs-ganesha/ubuntu xenial main" | tee /etc/apt/sources.list.d/nfs-ganesha.list && \
-    echo "deb http://ppa.launchpad.net/gluster/libntirpc/ubuntu xenial main" | tee /etc/apt/sources.list.d/libntirpc.list && \
     wget -q -O- 'https://download.ceph.com/keys/release.asc' | apt-key add - && \
     echo "deb http://download.ceph.com/debian-$CEPH_VERSION/ xenial main" | tee /etc/apt/sources.list.d/ceph-$CEPH_VERSION.list && \
-    apt-get update && apt-get install -y --force-yes ceph-mon ceph-osd ceph-mds ceph-mgr ceph-base ceph-common radosgw rbd-mirror nfs-ganesha nfs-ganesha-fsal sharutils etcd && \
+    apt-get update && apt-get install -y --force-yes $PACKAGES && \
+    dpkg -s $PACKAGES && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
 \
 # Install confd
